@@ -1,15 +1,22 @@
 from flask import jsonify
 from flask_openapi3 import APIBlueprint, Tag
 from models import Session, BalanceHistory
-from schemas import BalanceSchema, BalanceViewSchema
+from schemas import (
+    BalanceSchema, BalanceViewSchema, ErrorSchema, BalanceListResponse,
+    BalanceCurrentResponse
+)
 from datetime import datetime
+from services.balance import calculate_balance
 
-balance_tag = Tag(name='Balance', description="Balance history operations")
+balance_tag = Tag(name='Balance', description="Operações de histórico de saldo")
 balance_routes = APIBlueprint('balance', __name__, url_prefix='/balance', abp_tags=[balance_tag])
 
-@balance_routes.get('/')
+@balance_routes.get('/', responses={"200": BalanceListResponse, "400": ErrorSchema})
 def get_balance_history():
-    """Get balance history"""
+    """Listar todo histórico de saldo
+    
+    Este endpoint permite aos usuários recuperar todo o histórico de saldo existente.
+    """
     session = Session()
     try:
         history = session.query(BalanceHistory).all()
@@ -31,9 +38,12 @@ def get_balance_history():
     finally:
         session.close()
 
-@balance_routes.get('/current')
+@balance_routes.get('/current', responses={"200": BalanceCurrentResponse, "404": ErrorSchema, "400": ErrorSchema})
 def get_current_balance():
-    """Get current day's balance"""
+    """Obter saldo do dia atual
+    
+    Este endpoint permite aos usuários recuperar o saldo do dia atual.
+    """
     session = Session()
     try:
         today = datetime.now().date()
@@ -59,9 +69,12 @@ def get_current_balance():
     finally:
         session.close()
         
-@balance_routes.post('/')
-def add_balance_history():
-    """Add a new balance history record"""
+@balance_routes.post('/', responses={"201": BalanceViewSchema, "400": ErrorSchema})
+def add_balance_history(body: BalanceSchema):
+    """Adicionar um novo registro de saldo
+    
+    Este endpoint permite aos usuários criar um novo registro de saldo.
+    """
     session = Session()
     try:
         data = request.get_json()
@@ -91,5 +104,20 @@ def add_balance_history():
         session.rollback()
         return {"message": f"Error adding balance history record: {str(e)}"}, 400
     
+    finally:
+        session.close()
+
+@balance_routes.post('/recalculate', responses={"200": None, "400": ErrorSchema})
+def recalculate_balance():
+    """Recalcular histórico de saldo
+    
+    Este endpoint permite aos usuários recalcular todo o histórico de saldo.
+    """
+    session = Session()
+    try:
+        calculate_balance(session)
+        return {"message": "Balance history recalculated successfully"}, 200
+    except Exception as e:
+        return {"message": f"Error recalculating balance: {str(e)}"}, 400
     finally:
         session.close()

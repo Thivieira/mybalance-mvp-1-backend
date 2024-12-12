@@ -1,5 +1,5 @@
 from flask_openapi3 import OpenAPI, Info, Tag
-from flask import redirect, url_for
+from flask import redirect, url_for, jsonify
 from urllib.parse import unquote
 
 from sqlalchemy.exc import IntegrityError
@@ -11,7 +11,12 @@ from flask_cors import CORS
 from controllers.category import category_routes
 from controllers.transaction import transaction_routes
 from controllers.balance_history import balance_routes
-from balance import calculate_balance
+from services.balance import calculate_balance
+
+# Define tags first
+home_tag = Tag(name="Documentação", description="Documentação da API MyBalance")
+site_map_tag = Tag(name="Mapa do site", description="Mapa do site da API")
+
 info = Info(title="MyBalance API", version="1.0.0")
 app = OpenAPI(__name__, info=info)
 app.url_map.strict_slashes = False
@@ -25,11 +30,20 @@ CORS(app, resources={
     }
 })
 
-app.config['OPENAPI_URL_PREFIX'] = '/'
-app.config['OPENAPI_SWAGGER_UI_PATH'] = '/openapi'
+app.config['OPENAPI_URL_PREFIX'] = ''
+app.config['OPENAPI_VERSION'] = '3.0.3'
+app.config['OPENAPI_JSON_PATH'] = 'openapi.json'
+app.config['OPENAPI_SWAGGER_UI_PATH'] = '/docs'
 app.config['OPENAPI_SWAGGER_UI_URL'] = 'https://cdn.jsdelivr.net/npm/swagger-ui-dist/'
-app.config['OPENAPI_REDOC_PATH'] = '/redoc'
-app.config['OPENAPI_REDOC_URL'] = 'https://cdn.jsdelivr.net/npm/redoc@next/bundles/redoc.standalone.js'
+app.config['OPENAPI_SWAGGER_UI_CONFIG'] = {
+    'deepLinking': True,
+    'layout': "BaseLayout",
+    'defaultModelsExpandDepth': -1,
+    'docExpansion': 'list',
+    'defaultModelExpandDepth': 2,
+    'displayRequestDuration': True,
+    'language': 'pt-BR'
+}
 
 # Register the blueprints
 app.register_api(transaction_routes)
@@ -39,19 +53,16 @@ app.register_api(balance_routes)
 # Add this function instead
 @app.before_first_request
 def init_app():
-    """Inicializa o estado da aplicação antes da primeira requisição"""
+    """Initialize application state before first request"""
     session = Session()
     try:
         calculate_balance(session)
     finally:
         session.close()
 
-# Definindo tags
-home_tag = Tag(name="Documentation", description="Seleção de documentação: Swagger, Redoc ou Rapidoc")
-
 @app.get('/', tags=[home_tag])
 def home():
-    """Redireciona para /openapi, tela que permite escolher o estilo de documentação.
+    """Redireciona para documentação em português.
     """
     return redirect('/openapi')
 
@@ -60,7 +71,6 @@ def has_no_empty_params(rule):
     arguments = rule.arguments if rule.arguments is not None else ()
     return len(defaults) >= len(arguments)
 
-site_map_tag = Tag(name="Site Map", description="Mapa do site da API")
 @app.get("/site-map", tags=[site_map_tag])
 def site_map():
     links = []

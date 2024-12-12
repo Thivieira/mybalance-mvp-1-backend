@@ -86,7 +86,7 @@ def delete_category(path: CategoryDeletePathSchema):
     """Deleta uma categoria
     
     Neste endpoint, o usuário pode deletar uma categoria existente.
-     
+    Retorna erro 400 se existirem transações associadas a esta categoria.
     """
     try:
         session = Session()
@@ -95,12 +95,19 @@ def delete_category(path: CategoryDeletePathSchema):
         if category is None:
             return {"message": f"Category with id {path.id} not found"}, 404
             
+        # Check if there are any transactions using this category
+        if hasattr(category, 'transactions') and len(category.transactions) > 0:
+            return {
+                "message": "Cannot delete category that has transactions. Remove or reassign the transactions first."
+            }, 400
+            
         session.delete(category)
         session.commit()
         return '', 204
         
     except Exception as e:
         session.rollback()
+        print(e)
         return {"message": "Error deleting category"}, 400
         
     finally:

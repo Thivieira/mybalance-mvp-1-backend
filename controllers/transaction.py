@@ -59,15 +59,15 @@ def add_transaction(body: TransactionSchema):
         
         category = session.query(Category).filter(Category.id == body.category_id).first()
         if not category:
-            return {"message": "Category not found"}, 400
+            return {"message": "Category not found"}, 404
             
-        date = datetime.strptime(body.date, '%Y-%m-%d')
+        transaction_date = datetime.strptime(body.date, '%Y-%m-%d').date()
         
         transaction = Transaction(
             description=body.description,
             amount=body.amount,
             category=category,
-            date=date,
+            date=transaction_date,
             type=body.type
         )
         
@@ -78,7 +78,7 @@ def add_transaction(body: TransactionSchema):
         
     except Exception as e:
         session.rollback()
-        return {"message": "Could not save the new transaction"}, 400
+        return {"message": f"Could not save the new transaction: {str(e)}"}, 400
     
     finally:
         session.close()

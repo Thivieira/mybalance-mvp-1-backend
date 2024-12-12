@@ -1,19 +1,20 @@
-from sqlalchemy import Column, String, Integer, DateTime, Float, UniqueConstraint, ForeignKey
+from sqlalchemy import Column, String, Integer, Date, Numeric, UniqueConstraint, ForeignKey
 from sqlalchemy.orm import relationship
-from datetime import datetime
+from datetime import datetime, date
 from typing import Union
+from decimal import Decimal
 
-from  models import Base
+from models import Base
 
 
 class Transaction(Base):
     __tablename__ = 'transactions'
     id = Column(Integer, primary_key=True)
     description = Column(String(140))
-    amount = Column(Float)
+    amount = Column(String(20), nullable=False)
     category_id = Column(Integer, ForeignKey('categories.id'), nullable=False)
     category = relationship("Category", back_populates="transactions")
-    date = Column(DateTime, default=datetime.now())
+    date = Column(Date, default=date.today)
     type = Column(String(10), nullable=False, default="income")  # income or expense
 
     # Creating a uniqueness requirement involving a pair of information
@@ -32,10 +33,14 @@ class Transaction(Base):
             type: transaction type (income or expense)
         """
         self.description = description
-        self.amount = amount
+        self.amount = str(Decimal(str(amount)))
         self.category = category
-        self.date = date
+        self.date = date if isinstance(date, date) else datetime.strptime(date, '%Y-%m-%d').date()
         self.type = type
+
+    def get_amount(self):
+        """Returns the amount as a Decimal object"""
+        return Decimal(self.amount)
 
     def to_dict(self):
         """
@@ -46,7 +51,7 @@ class Transaction(Base):
             "description": self.description,
             "amount": self.amount,
             "category": self.category.to_dict(),
-            "date": self.date,
+            "date": self.date.strftime('%Y-%m-%d'),
             "type": self.type
         }
 
