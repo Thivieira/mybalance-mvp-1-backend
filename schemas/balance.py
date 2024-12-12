@@ -20,7 +20,6 @@ class BalanceListResponse(BaseModel):
     balances: List[BalanceViewSchema]
 
 class BalanceCurrentResponse(BaseModel):
-    date: str
-    income: float
-    expense: float
-    balance: float
+    balance: str
+    income: str
+    expense: str

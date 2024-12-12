@@ -1,6 +1,7 @@
 from sqlalchemy_utils import database_exists, create_database
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import create_engine
+from sqlalchemy.pool import StaticPool
 import os
 
 # importing base first
@@ -16,7 +17,14 @@ if not os.path.exists(db_path):
 db_url = 'sqlite:///%s/db.sqlite3' % db_path
 
 # create the connection engine with the database
-engine = create_engine(db_url, echo=False)
+engine = create_engine(
+    db_url,
+    echo=False,
+    connect_args={
+        "check_same_thread": False
+    },
+    poolclass=StaticPool
+)
 
 # Instance a session creator with the database
 Session = sessionmaker(bind=engine)

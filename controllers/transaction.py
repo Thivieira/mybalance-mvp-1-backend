@@ -57,9 +57,11 @@ def add_transaction(body: TransactionSchema):
     try:
         session = Session()
         
-        category = session.query(Category).filter(Category.id == body.category_id).first()
-        if not category:
-            return {"message": "Category not found"}, 404
+        category = None
+        if body.category_id:
+            category = session.query(Category).filter(Category.id == body.category_id).first()
+            if not category:
+                return {"message": "Category not found"}, 404
             
         transaction_date = datetime.strptime(body.date, '%Y-%m-%d').date()
         

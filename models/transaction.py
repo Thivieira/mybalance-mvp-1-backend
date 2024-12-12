@@ -12,7 +12,7 @@ class Transaction(Base):
     id = Column(Integer, primary_key=True)
     description = Column(String(140))
     amount = Column(String(20), nullable=False)
-    category_id = Column(Integer, ForeignKey('categories.id'), nullable=False)
+    category_id = Column(Integer, ForeignKey('categories.id'), nullable=True)
     category = relationship("Category", back_populates="transactions")
     date = Column(Date, default=date.today)
     type = Column(String(10), nullable=False, default="income")  # income or expense
@@ -21,16 +21,16 @@ class Transaction(Base):
     __table_args__ = (UniqueConstraint("description", "category_id", name="transaction_unique_id"),)
 
 
-    def __init__(self, description, amount, category, date, type):
+    def __init__(self, description, amount, date, type, category=None):
         """
         Creates a transaction
 
         Arguments:
             description: transaction description.
             amount: transaction value
-            category: Category object
             date: transaction date
             type: transaction type (income or expense)
+            category: Category object (optional)
         """
         self.description = description
         self.amount = str(Decimal(str(amount)))
@@ -50,7 +50,7 @@ class Transaction(Base):
             "id": self.id,
             "description": self.description,
             "amount": self.amount,
-            "category": self.category.to_dict(),
+            "category": self.category.to_dict() if self.category else None,
             "date": self.date.strftime('%Y-%m-%d'),
             "type": self.type
         }

@@ -7,37 +7,47 @@ from schemas.transaction import TransactionType
 from decimal import Decimal
 
 def calculate_balance(session):
-    today = date.today()
-
-    # Get all transactions grouped by date
-    daily_totals = session.query(
-        Transaction.date,
-        func.sum(func.cast(Transaction.amount, String)).filter(Transaction.type == TransactionType.INCOME).label("total_income"),
-        func.sum(func.cast(Transaction.amount, String)).filter(Transaction.type == TransactionType.EXPENSE).label("total_expense")
-    ).group_by(Transaction.date).all()
-
-    # Delete all existing balance history records
-    session.query(BalanceHistory).delete()
+    # Get all transactions ordered by date
+    transactions = session.query(Transaction).order_by(Transaction.date).all()
     
     running_balance = Decimal('0')
-    for day_total in daily_totals:
-        day_date = day_total[0]
-        day_income = Decimal(str(day_total[1] or '0'))
-        day_expense = Decimal(str(day_total[2] or '0'))
+    balance_records = {}
+    
+    # First, clear existing balance history
+    session.query(BalanceHistory).delete()
+    
+    for transaction in transactions:
+        amount = Decimal(str(transaction.amount))
+        date_key = transaction.date
         
-        # Calculate running balance
-        running_balance += (day_income - day_expense)
-        
-        # Create balance history record
-        balance_history = BalanceHistory(
-            date=day_date,
-            income=day_income,
-            expense=day_expense,
-            balance=running_balance
-        )
-        session.add(balance_history)
-
+        if date_key not in balance_records:
+            balance_records[date_key] = {
+                'date': date_key,
+                'income': Decimal('0'),
+                'expense': Decimal('0'),
+                'balance': Decimal('0')
+            }
+            
+        if transaction.type == TransactionType.INCOME:
+            running_balance += amount
+            balance_records[date_key]['income'] += amount
+        else:
+            running_balance -= amount
+            balance_records[date_key]['expense'] += amount
+            
+        balance_records[date_key]['balance'] = running_balance
+    
     try:
+        # Update balance history
+        for date, record in balance_records.items():
+            balance_history = BalanceHistory(
+                date=date,
+                income=str(record['income']),
+                expense=str(record['expense']),
+                balance=str(record['balance'])
+            )
+            session.add(balance_history)
+            
         session.commit()
     except Exception as e:
         session.rollback()

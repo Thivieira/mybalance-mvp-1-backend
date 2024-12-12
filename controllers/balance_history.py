@@ -19,49 +19,47 @@ def get_balance_history():
     """
     session = Session()
     try:
-        history = session.query(BalanceHistory).all()
-        
-        result = []
-        for record in history:
-            result.append({
-                "date": record.date.strftime('%Y-%m-%d'),
-                "income": record.income,
-                "expense": record.expense,
-                "balance": record.balance
-            })
-        
-        return jsonify(result), 200
+        with session.begin():
+            history = session.query(BalanceHistory).all()
+            
+            result = []
+            for record in history:
+                result.append({
+                    "date": record.date.strftime('%Y-%m-%d'),
+                    "income": record.income,
+                    "expense": record.expense,
+                    "balance": record.balance
+                })
+            
+            return jsonify(result), 200
     
     except Exception as e:
-        return {"message": "Error fetching balance history"}, 400
+        return {"message": f"Error fetching balance history: {str(e)}"}, 400
     
     finally:
         session.close()
 
-@balance_routes.get('/current', responses={"200": BalanceCurrentResponse, "404": ErrorSchema, "400": ErrorSchema})
+@balance_routes.get('/current', responses={"200": BalanceCurrentResponse, "404": ErrorSchema})
 def get_current_balance():
-    """Obter saldo do dia atual
+    """Recuperar saldo atual
     
-    Este endpoint permite aos usuários recuperar o saldo do dia atual.
+    Este endpoint permite aos usuários recuperar o saldo atual.
     """
     session = Session()
     try:
-        today = datetime.now().date()
-        record = session.query(BalanceHistory).filter(
-            BalanceHistory.date == today
-        ).first()
+        # Get the latest balance record
+        latest_balance = session.query(BalanceHistory)\
+            .order_by(BalanceHistory.date.desc())\
+            .first()
         
-        if not record:
-            return {"message": "No balance record for today"}, 404
+        if not latest_balance:
+            return {"balance": "0.00", "income": "0.00", "expense": "0.00"}, 200
             
-        result = {
-            "date": record.date.strftime('%Y-%m-%d'),
-            "income": record.income,
-            "expense": record.expense,
-            "balance": record.balance
-        }
-        
-        return jsonify(result), 200
+        return {
+            "balance": str(latest_balance.get_balance()),
+            "income": str(latest_balance.income),
+            "expense": str(latest_balance.expense)
+        }, 200
         
     except Exception as e:
         return {"message": "Error fetching current balance"}, 400

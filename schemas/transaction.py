@@ -12,7 +12,7 @@ class TransactionSchema(BaseModel):
     """
     description: str
     amount: float
-    category_id: int
+    category_id: Optional[int] = None
     date: str
     type: Literal[TransactionType.INCOME, TransactionType.EXPENSE]
 
