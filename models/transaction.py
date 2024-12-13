@@ -13,12 +13,9 @@ class Transaction(Base):
     description = Column(String(140))
     amount = Column(String(20), nullable=False)
     category_id = Column(Integer, ForeignKey('categories.id'), nullable=True)
-    category = relationship("Category", back_populates="transactions")
+    category = relationship("Category")
     date = Column(Date, default=date.today)
     type = Column(String(10), nullable=False, default="income")  # income or expense
-
-    # Creating a uniqueness requirement involving a pair of information
-    __table_args__ = (UniqueConstraint("description", "category_id", name="transaction_unique_id"),)
 
 
     def __init__(self, description, amount, date, type, category=None):

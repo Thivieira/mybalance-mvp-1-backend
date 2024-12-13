@@ -60,9 +60,9 @@ def add_transaction(body: TransactionSchema):
     try:
         session = Session()
         
-        # Handle category
+        # Handle optional category
         category = None
-        if body.category_id:
+        if body.category_id is not None:
             category = session.query(Category).filter(Category.id == body.category_id).first()
             if not category:
                 return {"message": f"Categoria com id {body.category_id} não encontrada"}, 404
@@ -73,7 +73,7 @@ def add_transaction(body: TransactionSchema):
             amount=body.amount,
             date=body.date,
             type=body.type,
-            category=category
+            category=category  # This will be None if no category_id was provided
         )
         
         session.add(transaction)
@@ -84,8 +84,9 @@ def add_transaction(body: TransactionSchema):
         
         return jsonify(transaction.to_dict()), 201
         
-    except IntegrityError:
+    except IntegrityError as e:
         session.rollback()
+        print(e)
         return {
             "message": "Já existe uma transação com esta descrição e categoria. Use uma descrição ou categoria diferente."
         }, 400
