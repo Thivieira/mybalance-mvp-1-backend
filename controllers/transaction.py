@@ -72,9 +72,12 @@ def add_transaction(body: TransactionSchema):
             description=body.description,
             amount=body.amount,
             date=body.date,
-            type=body.type,
-            category=category  # This will be None if no category_id was provided
+            type=body.type
         )
+        
+        if category:
+            transaction.category = category
+            transaction.category_id = category.id
         
         session.add(transaction)
         session.commit()

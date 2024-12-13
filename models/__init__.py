@@ -39,3 +39,4 @@ from models.category import Category
 from models.balance_history import BalanceHistory
 # create the database tables, if they don't exist
 Base.metadata.create_all(engine)
+
