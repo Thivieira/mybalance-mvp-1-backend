@@ -24,7 +24,7 @@ app.url_map.strict_slashes = False
 # Atualiza a configuração CORS com opções adicionais
 CORS(app, resources={
     r"/*": {
-        "origins": "http://localhost:5500",
+        "origins": "*",
         "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
         "allow_headers": ["Content-Type", "Authorization"]
     }
