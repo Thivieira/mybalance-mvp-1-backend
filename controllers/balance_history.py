@@ -34,7 +34,7 @@ def get_balance_history():
             return jsonify(result), 200
     
     except Exception as e:
-        return {"message": f"Error fetching balance history: {str(e)}"}, 400
+        return {"message": f"Erro ao recuperar o histórico de saldo: {str(e)}"}, 400
     
     finally:
         session.close()
@@ -62,7 +62,7 @@ def get_current_balance():
         }, 200
         
     except Exception as e:
-        return {"message": "Error fetching current balance"}, 400
+        return {"message": "Erro ao recuperar o saldo atual"}, 400
     
     finally:
         session.close()
@@ -100,7 +100,7 @@ def add_balance_history(body: BalanceSchema):
         
     except Exception as e:
         session.rollback()
-        return {"message": f"Error adding balance history record: {str(e)}"}, 400
+        return {"message": f"Erro ao adicionar o registro de saldo: {str(e)}"}, 400
     
     finally:
         session.close()
@@ -114,8 +114,8 @@ def recalculate_balance():
     session = Session()
     try:
         calculate_balance(session)
-        return {"message": "Balance history recalculated successfully"}, 200
+        return {"message": "Histórico de saldo recalculado com sucesso"}, 200
     except Exception as e:
-        return {"message": f"Error recalculating balance: {str(e)}"}, 400
+        return {"message": f"Erro ao recalcular o saldo: {str(e)}"}, 400
     finally:
         session.close()

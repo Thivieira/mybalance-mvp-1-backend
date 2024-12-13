@@ -1,6 +1,6 @@
 from sqlalchemy import Column, String, Integer, Date, Numeric, UniqueConstraint, ForeignKey
 from sqlalchemy.orm import relationship
-from datetime import datetime, date
+from datetime import date, datetime
 from typing import Union
 from decimal import Decimal
 
@@ -28,14 +28,20 @@ class Transaction(Base):
         Arguments:
             description: transaction description.
             amount: transaction value
-            date: transaction date
+            date: transaction date (date object or YYYY-MM-DD string)
             type: transaction type (income or expense)
             category: Category object (optional)
         """
         self.description = description
         self.amount = str(Decimal(str(amount)))
         self.category = category
-        self.date = date if isinstance(date, date) else datetime.strptime(date, '%Y-%m-%d').date()
+        self.category_id = category.id if category else None
+        if isinstance(date, str):
+            self.date = datetime.strptime(date, '%Y-%m-%d').date()
+        elif isinstance(date, date):
+            self.date = date
+        else:
+            raise ValueError("Date must be a string in YYYY-MM-DD format or a date object")
         self.type = type
 
     def get_amount(self):

@@ -55,7 +55,7 @@ def add_category(body: CategoryBodySchema):
         
     except Exception as e:
         session.rollback()
-        return {"message": "Could not save the new category"}, 400
+        return {"message": "Não foi possível salvar a nova categoria"}, 400
     
     finally:
         session.close()
@@ -76,7 +76,7 @@ def update_category(path: CategoryUpdatePathSchema, body: CategoryUpdateBodySche
     
     except Exception as e:
         session.rollback()
-        return {"message": "Error updating category"}, 400
+        return {"message": "Erro ao atualizar a categoria"}, 400
     
     finally:
         session.close()
@@ -93,12 +93,12 @@ def delete_category(path: CategoryDeletePathSchema):
         category = session.query(Category).get(path.id)
         
         if category is None:
-            return {"message": f"Category with id {path.id} not found"}, 404
-            
+            return {"message": f"Categoria com id {path.id} não encontrada"}, 404
+        
         # Check if there are any transactions using this category
         if hasattr(category, 'transactions') and len(category.transactions) > 0:
             return {
-                "message": "Cannot delete category that has transactions. Remove or reassign the transactions first."
+                "message": "Não é possível deletar uma categoria que possui transações. Remova ou reatribua as transações primeiro."
             }, 400
             
         session.delete(category)
@@ -108,7 +108,7 @@ def delete_category(path: CategoryDeletePathSchema):
     except Exception as e:
         session.rollback()
         print(e)
-        return {"message": "Error deleting category"}, 400
+        return {"message": "Erro ao deletar a categoria"}, 400
         
     finally:
         session.close()

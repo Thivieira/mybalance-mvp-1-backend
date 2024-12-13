@@ -13,7 +13,7 @@ class TransactionSchema(BaseModel):
     description: str
     amount: float
     category_id: Optional[int] = None
-    date: str
+    date: str  # Format: YYYY-MM-DD
     type: Literal[TransactionType.INCOME, TransactionType.EXPENSE]
 
 class TransactionSearchByDescriptionSchema(BaseModel):
